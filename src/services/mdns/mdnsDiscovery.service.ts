@@ -5,6 +5,7 @@ import { SlaveDevice } from '../../modules/slaveDevices/slaveDevice.model';
 export class MdnsDiscoveryService {
   private static bonjour: Bonjour | null = null;
   private static cleanupInterval: NodeJS.Timeout | null = null;
+  private static publishInterval: NodeJS.Timeout | null = null;
   private static OFFLINE_TIMEOUT_MS = 90 * 1000;
   private static CLEANUP_INTERVAL_MS = 30 * 1000;
 
@@ -32,7 +33,38 @@ export class MdnsDiscoveryService {
 
     console.log('[mDNS] Scanning for "http" and "siren" service advertisements...');
 
-    // 3. Start periodic heartbeat status cleanup
+    // 3. Publish local service (advertise this SBC server)
+    const publishName = process.env.MDNS_PUBLISH_NAME || 'SBC-server';
+    const publishType = process.env.MDNS_PUBLISH_TYPE || 'server';
+    const publishProtocol = (process.env.MDNS_PUBLISH_PROTOCOL || 'tcp') as 'tcp' | 'udp';
+    const publishPort = parseInt(process.env.MDNS_PUBLISH_PORT || '80', 10);
+
+    const publishService = () => {
+      if (!this.bonjour) return;
+      try {
+        this.bonjour.publish({
+          name: publishName,
+          type: publishType,
+          protocol: publishProtocol,
+          port: publishPort
+        });
+      } catch (error) {
+        console.error('[mDNS] Error publishing local service:', error);
+      }
+    };
+
+    publishService();
+    console.log("MDNS Initalized");
+
+    this.publishInterval = setInterval(() => {
+      if (!this.bonjour) return;
+      this.bonjour.unpublishAll(() => {
+        console.log("Refreshing");
+        publishService();
+      });
+    }, 30000);
+
+    // 4. Start periodic heartbeat status cleanup
     this.startPeriodicCleanup();
   }
 
@@ -45,6 +77,11 @@ export class MdnsDiscoveryService {
     if (this.cleanupInterval) {
       clearInterval(this.cleanupInterval);
       this.cleanupInterval = null;
+    }
+
+    if (this.publishInterval) {
+      clearInterval(this.publishInterval);
+      this.publishInterval = null;
     }
 
     if (this.bonjour) {
