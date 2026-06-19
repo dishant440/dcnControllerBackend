@@ -42,10 +42,10 @@ export class DCNService {
   /**
    * Mark a device as offline by name
    */
-  public static async markOffline(name: string): Promise<IDCN | null> {
+  public static async markOffline(dcnSerialNumber: string): Promise<IDCN | null> {
     return await DCN.findOneAndUpdate(
-      { name },
-      { status: 'offline' },
+      { dcnSerialNumber },
+      { isAvailable: false, isAlive: false, lastSeen: new Date() },
       { new: true }
     );
   }
