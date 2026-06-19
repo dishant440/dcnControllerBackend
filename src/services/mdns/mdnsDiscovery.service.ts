@@ -1,6 +1,6 @@
 import Bonjour from 'bonjour-service';
-import { SlaveDeviceService } from '../../modules/dcnDevice/dcnDevice.service';
-import { SlaveDevice } from '../../modules/dcnDevice/dcnDevice.model';
+import { DCNService } from '../../modules/dcnDevice/dcnDevice.service';
+import { DCN } from '../../modules/dcnDevice/dcnDevice.model';
 
 export class MdnsDiscoveryService {
   private static bonjour: Bonjour | null = null;
@@ -54,7 +54,7 @@ export class MdnsDiscoveryService {
     };
 
     publishService();
-    console.log("MDNS Initalized");
+    console.log("MDNS Initialized");
 
     this.publishInterval = setInterval(() => {
       if (!this.bonjour) return;
@@ -141,11 +141,20 @@ export class MdnsDiscoveryService {
       console.log(`      IP:   ${ipAddress}`);
       console.log(`      Port: ${service.port}`);
 
-      await SlaveDeviceService.upsertDevice({
-        name: service.name,
-        ipAddress,
-        port: service.port || 80,
-        status: 'online'
+      const txt = service.txt || {};
+      const dcnSerialNumber = txt.serial || txt.serialNumber || service.name;
+      const dcnMacAddress = txt.mac || txt.macAddress || '00:00:00:00:00:00';
+      const slaveCount = parseInt(txt.slaves || txt.slaveCount || '0', 10);
+
+      await DCNService.upsertDevice({
+        dcnSerialNumber,
+        dcnMacAddress,
+        dcnIpAddress: ipAddress,
+        dcnName: service.name,
+        slaveCount,
+        isAvailable: true,
+        isAlive: true,
+        lastSeen: new Date()
       });
 
     } catch (error) {
@@ -161,7 +170,9 @@ export class MdnsDiscoveryService {
       if (!this.isSirenDevice(service)) return;
 
       console.log(`[mDNS] SIREN device went offline: ${service.name}`);
-      await SlaveDeviceService.markOffline(service.name);
+      const txt = service.txt || {};
+      const dcnSerialNumber = txt.serial || txt.serialNumber || service.name;
+      await DCNService.markOffline(dcnSerialNumber);
 
     } catch (error) {
       console.error('[mDNS] Error handling device DOWN event:', error);
@@ -176,14 +187,14 @@ export class MdnsDiscoveryService {
       try {
         const cutoffTime = new Date(Date.now() - this.OFFLINE_TIMEOUT_MS);
 
-        const expiredDevices = await SlaveDevice.find({
-          status: 'online',
+        const expiredDevices = await DCN.find({
+          isAvailable: true,
           lastSeen: { $lt: cutoffTime }
         });
 
         for (const device of expiredDevices) {
-          console.log(`[mDNS Cleanup] Device "${device.name}" missed heartbeats. Marking offline.`);
-          await SlaveDeviceService.markOffline(device.name);
+          console.log(`[mDNS Cleanup] Device "${device.dcnName}" missed heartbeats. Marking offline.`);
+          await DCNService.markOffline(device.dcnSerialNumber);
         }
       } catch (error) {
         console.error('[mDNS Cleanup] Error running periodic status cleanup:', error);

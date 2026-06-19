@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { SlaveDeviceService } from './dcnDevice.service';
+import { DCNService } from './dcnDevice.service';
 
 export class SlaveDeviceController {
   /**
@@ -9,7 +9,7 @@ export class SlaveDeviceController {
    */
   public static async getDevices(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const devices = await SlaveDeviceService.getAllDevices();
+      const devices = await DCNService.getAllDevices();
       res.status(200).json({
         success: true,
         count: devices.length,
@@ -27,7 +27,7 @@ export class SlaveDeviceController {
    */
   public static async getDeviceById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const device = await SlaveDeviceService.getDeviceById(req.params.id as string);
+      const device = await DCNService.getDeviceById(req.params.id as string);
       if (!device) {
         res.status(404);
         throw new Error('Slave device not found');

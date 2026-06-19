@@ -9,21 +9,28 @@
   "scripts": {
     "dev": "nodemon src/index.ts",
     "dev:mdns": "nodemon src/services/mdns/mdnsDiscovery.ts",
+    "dev:mqtt": "nodemon src/services/mqtt/mqttProcess.ts",
     "build": "rm -rf build && tsc",
     "start": "node build/index.js",
     "start:mdns": "node build/services/mdns/mdnsDiscovery.js",
+    "start:mqtt": "node build/services/mqtt/mqttProcess.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "bonjour-service": "^1.4.1",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "mongoose": "^9.7.0"
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.7.0",
+    "mqtt": "^5.15.1"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.9.2",
     "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
