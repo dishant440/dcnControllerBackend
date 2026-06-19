@@ -1,4 +1,4 @@
-import { SlaveDevice, ISlaveDevice } from './slaveDevice.model';
+import { SlaveDevice, ISlaveDevice } from './dcnDevice.model';
 
 export class SlaveDeviceService {
   /**
@@ -20,7 +20,7 @@ export class SlaveDeviceService {
    */
   public static async upsertDevice(deviceData: Partial<ISlaveDevice>): Promise<ISlaveDevice> {
     const { name, ipAddress, port, status } = deviceData;
-    
+
     // Find device by name (hostname) or create/update it
     return await SlaveDevice.findOneAndUpdate(
       { name },

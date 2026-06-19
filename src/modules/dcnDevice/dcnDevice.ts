@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { SlaveDeviceService } from './slaveDevice.service';
+import { SlaveDeviceService } from './dcnDevice.service';
 
 export class SlaveDeviceController {
   /**

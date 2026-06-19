@@ -1,6 +1,6 @@
 import Bonjour from 'bonjour-service';
-import { SlaveDeviceService } from '../../modules/slaveDevices/slaveDevice.service';
-import { SlaveDevice } from '../../modules/slaveDevices/slaveDevice.model';
+import { SlaveDeviceService } from '../../modules/dcnDevice/dcnDevice.service';
+import { SlaveDevice } from '../../modules/dcnDevice/dcnDevice.model';
 
 export class MdnsDiscoveryService {
   private static bonjour: Bonjour | null = null;
@@ -73,7 +73,7 @@ export class MdnsDiscoveryService {
    */
   public static stopDiscovery(): void {
     console.log('[mDNS] Stopping discovery service...');
-    
+
     if (this.cleanupInterval) {
       clearInterval(this.cleanupInterval);
       this.cleanupInterval = null;
@@ -175,7 +175,7 @@ export class MdnsDiscoveryService {
     this.cleanupInterval = setInterval(async () => {
       try {
         const cutoffTime = new Date(Date.now() - this.OFFLINE_TIMEOUT_MS);
-        
+
         const expiredDevices = await SlaveDevice.find({
           status: 'online',
           lastSeen: { $lt: cutoffTime }

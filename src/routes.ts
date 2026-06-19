@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import userModuleRoutes from './modules/user/user.routes';
-import slaveDeviceModuleRoutes from './modules/slaveDevices/slaveDevice.routes';
+import slaveDeviceModuleRoutes from './modules/dcnDevice/dcnDevice.routes';
 
 const router = Router();
 

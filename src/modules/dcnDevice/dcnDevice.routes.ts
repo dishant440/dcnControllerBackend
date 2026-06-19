@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { SlaveDeviceController } from './slaveDevice.controller';
+import { SlaveDeviceController } from './dcnDevice';
 
 const router = Router();
 
