@@ -2,6 +2,8 @@ import dotenv from 'dotenv';
 import { connectDB } from '../../config/db';
 import mqtt from 'mqtt';
 import { MQTTService, mqttEmitter } from './mqtt.service';
+import { Telemetry } from '../../modules/dcnDevice/telemetry.model';
+import { DeviceHandlerFactory } from '../deviceHandlers/deviceHandler.factory';
 
 // Load environment variables
 dotenv.config();
@@ -34,8 +36,14 @@ const client = mqtt.connect(connectUrl, mqttOptions);
 client.on('connect', (connack) => {
   console.log('[MQTT Process] Connected to broker successfully. Connack:', connack);
   
-  // Here we can subscribe to topic patterns such as heartbeats, telemetry, etc.
-  // client.subscribe('topic/heartbeat/+');
+  // Subscribe to live telemetry data from DCN gateways
+  client.subscribe('topic/live/+', (err) => {
+    if (err) {
+      console.error('[MQTT Process] Failed to subscribe to telemetry topic:', err);
+    } else {
+      console.log('[MQTT Process] Subscribed to topic/live/+');
+    }
+  });
 });
 
 client.on('reconnect', () => {
@@ -56,6 +64,58 @@ client.on('error', (err) => {
 
 // Initialize MQTTService with the client
 MQTTService.init(client);
+
+// Handle incoming messages for telemetry parsing
+client.on('message', async (topic, message) => {
+  const payloadStr = message.toString('utf-8');
+
+  if (topic.startsWith('topic/live/')) {
+    const mac = topic.replace('topic/live/', '');
+    try {
+      const mqttData = JSON.parse(payloadStr);
+      const slaveCount = mqttData.SLAVE_COUNT || 0;
+      
+      console.log(`[MQTT Process] Telemetry packet received from DCN [${mqttData.DCN_NAME}] (MAC: ${mac}) containing ${slaveCount} sub-devices`);
+
+      for (let i = 1; i <= slaveCount; i++) {
+        const slave = mqttData[`SLAVE_${i}`];
+        if (!slave) continue;
+
+        const deviceType = slave.DEVICE_TYPE;
+        const deviceName = slave.DEVICE_NAME;
+        const batchId = slave.DEVICE_BATCH_ID || 'NO_BATCH';
+
+        if (!deviceType || !deviceName) {
+          console.warn(`[MQTT Process] Missing DEVICE_TYPE or DEVICE_NAME in SLAVE_${i}. Skipping.`);
+          continue;
+        }
+
+        if (DeviceHandlerFactory.hasHandler(deviceType)) {
+          const handler = DeviceHandlerFactory.getHandler(deviceType);
+          const parsedValues = handler.parseTelemetry(slave);
+
+          // Save parsed telemetry values to MongoDB Time-Series
+          await Telemetry.create({
+            timestamp: new Date(),
+            metadata: {
+              batchId,
+              dcnName: mqttData.DCN_NAME || 'UNKNOWN_DCN',
+              deviceName,
+              deviceType,
+            },
+            values: parsedValues,
+          });
+          
+          console.log(`[MQTT Process] Saved telemetry for ${deviceName} (${deviceType}):`, parsedValues);
+        } else {
+          console.warn(`[MQTT Process] No handler found for device type "${deviceType}". Skipping DB insertion.`);
+        }
+      }
+    } catch (err: any) {
+      console.error(`[MQTT Process] Error processing live telemetry JSON:`, err?.message || err);
+    }
+  }
+});
 
 // Listen to raw messages emitted by the service
 mqttEmitter.on('rawMessage', ({ topic, payloadStr }) => {
