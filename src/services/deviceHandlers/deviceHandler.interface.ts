@@ -11,4 +11,10 @@ export interface IDeviceHandler {
    * @param value The value to set.
    */
   buildControlCommand(param: string, value: any): Record<string, any>;
+
+  /**
+   * Validate configuration settings for this device type.
+   * @param config The config object to validate.
+   */
+  validateConfig?(config: Record<string, any>): { isValid: boolean; error?: string };
 }

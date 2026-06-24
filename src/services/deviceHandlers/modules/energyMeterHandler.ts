@@ -31,4 +31,28 @@ export class EnergyMeterHandler implements IDeviceHandler {
       value,
     };
   }
+
+  public validateConfig(config: Record<string, any>): { isValid: boolean; error?: string } {
+    if (!config) {
+      return { isValid: false, error: 'Config object is missing' };
+    }
+
+    const slaveId = config.slaveId ?? config.slaveAddress;
+    if (slaveId === undefined || slaveId === null) {
+      return { isValid: false, error: 'slaveId/slaveAddress is required' };
+    }
+    if (typeof slaveId !== 'number' || slaveId < 1 || slaveId > 247) {
+      return { isValid: false, error: 'slaveId/slaveAddress must be a number between 1 and 247' };
+    }
+
+    // Optional CT/PT checks
+    if (config.ctRatio !== undefined && (typeof config.ctRatio !== 'number' || config.ctRatio <= 0)) {
+      return { isValid: false, error: 'ctRatio must be a positive number' };
+    }
+    if (config.ptRatio !== undefined && (typeof config.ptRatio !== 'number' || config.ptRatio <= 0)) {
+      return { isValid: false, error: 'ptRatio must be a positive number' };
+    }
+
+    return { isValid: true };
+  }
 }

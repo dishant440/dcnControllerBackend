@@ -37,6 +37,7 @@ const telemetrySchema = new Schema<ITelemetry>(
 
 telemetrySchema.index({ 'metadata.batchId': 1, timestamp: 1 });
 telemetrySchema.index({ 'metadata.dcnName': 1, 'metadata.deviceName': 1 });
+telemetrySchema.index({ 'metadata.deviceType': 1, timestamp: -1 });
 
 export const Telemetry = model<ITelemetry>('Telemetry', telemetrySchema);
 

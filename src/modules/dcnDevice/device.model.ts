@@ -1,4 +1,5 @@
 import { Schema, model, Document } from 'mongoose';
+import { DeviceHandlerFactory } from '../../services/deviceHandlers/deviceHandler.factory';
 
 export interface IDevice extends Document {
   slaveId: number;
@@ -24,7 +25,12 @@ const deviceSchema = new Schema<IDevice>(
     deviceType: {
       type: String,
       required: true,
-      enum: ['PID', 'ENERGY_METER', 'VFD', 'GENERIC_MODBUS'],
+      validate: {
+        validator: function(v: string) {
+          return DeviceHandlerFactory.hasHandler(v);
+        },
+        message: (props: any) => `[Device Validation] Device type "${props.value}" is not supported or does not have a registered module handler.`
+      }
     },
     make: {
       type: String,
@@ -44,4 +50,16 @@ const deviceSchema = new Schema<IDevice>(
   }
 );
 
-export const Device = model<IDevice>('Device', deviceSchema);
+// Pre-save validation for device-specific configs
+deviceSchema.pre('save', function () {
+  const handler = DeviceHandlerFactory.getHandler(this.deviceType);
+  if (handler && handler.validateConfig) {
+    const { isValid, error } = handler.validateConfig(this.config);
+    if (!isValid) {
+      throw new Error(`[Device Validation] Invalid configuration for ${this.deviceType}: ${error}`);
+    }
+  }
+});
+
+// Compile model as 'SlaveDevice' to match the references in DCN model
+export const Device = model<IDevice>('SlaveDevice', deviceSchema);

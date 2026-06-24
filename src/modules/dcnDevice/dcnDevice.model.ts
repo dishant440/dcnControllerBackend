@@ -1,4 +1,5 @@
 import { Schema, model, Document, Types } from 'mongoose';
+import './device.model';
 
 
 export interface IDCN extends Document {
