@@ -1,4 +1,4 @@
-import { IDeviceHandler } from './deviceHandler.interface';
+import { IDeviceHandler } from '../deviceHandler.interface';
 
 export class PidHandler implements IDeviceHandler {
   public parseTelemetry(rawData: any): Record<string, any> {
