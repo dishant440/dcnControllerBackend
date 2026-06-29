@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import { connectDB } from '../../config/db';
+import { connectRedis, redisClient } from '../../config/redis';
 import mqtt from 'mqtt';
 import { MQTTService, mqttEmitter } from './mqtt.service';
 import { Telemetry } from '../../modules/dcnDevice/telemetry.model';
@@ -10,6 +11,9 @@ dotenv.config();
 
 // Connect to Database
 connectDB();
+
+// Connect to Redis
+connectRedis();
 
 console.log('[MQTT Process] Starting separate MQTT service process...');
 
@@ -94,8 +98,7 @@ client.on('message', async (topic, message) => {
           const handler = DeviceHandlerFactory.getHandler(deviceType);
           const parsedValues = handler.parseTelemetry(slave);
 
-          // Save parsed telemetry values to MongoDB Time-Series
-          await Telemetry.create({
+          const telemetryItem = {
             timestamp: new Date(),
             metadata: {
               batchId,
@@ -104,9 +107,11 @@ client.on('message', async (topic, message) => {
               deviceType,
             },
             values: parsedValues,
-          });
-          
-          console.log(`[MQTT Process] Saved telemetry for ${deviceName} (${deviceType}):`, parsedValues);
+          };
+
+          // Buffer parsed telemetry values in Redis queue
+          await redisClient.rPush('telemetry:queue', JSON.stringify(telemetryItem));
+          console.log(`[MQTT Process] Telemetry buffered to Redis for ${deviceName} (${deviceType})`);
         } else {
           console.warn(`[MQTT Process] No handler found for device type "${deviceType}". Skipping DB insertion.`);
         }
@@ -121,6 +126,29 @@ client.on('message', async (topic, message) => {
 mqttEmitter.on('rawMessage', ({ topic, payloadStr }) => {
   console.log(`[MQTT Process] Received message on topic [${topic}]:`, payloadStr.substring(0, 100));
 });
+
+// Background job to periodically flush buffered telemetry from Redis to MongoDB
+const flushIntervalMs = parseInt(process.env.DB_WRITE_INTERVAL || '10000', 10);
+console.log(`[MQTT Process] Starting database flusher with interval: ${flushIntervalMs}ms`);
+
+setInterval(async () => {
+  try {
+    const queueLen = await redisClient.lLen('telemetry:queue');
+    if (queueLen === 0) return;
+
+    console.log(`[MQTT Process] Flushing ${queueLen} records from Redis queue to MongoDB...`);
+    
+    // lPopCount pops up to 500 items at a time
+    const poppedData = await redisClient.lPopCount('telemetry:queue', 500);
+    if (!poppedData || poppedData.length === 0) return;
+
+    const parsedDocs = poppedData.map((item) => JSON.parse(item));
+    await Telemetry.insertMany(parsedDocs);
+    console.log(`[MQTT Process] Successfully bulk inserted ${parsedDocs.length} telemetry records to MongoDB.`);
+  } catch (err: any) {
+    console.error('[MQTT Process] Failed to flush telemetry batch to MongoDB:', err?.message || err);
+  }
+}, flushIntervalMs);
 
 // Handle clean shutdown
 const shutdown = () => {

@@ -12,6 +12,15 @@ services:
     networks:
       - siren-network
 
+  redis:
+    image: redis:7.0-alpine
+    container_name: siren-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - siren-network
+
   server:
     build:
       context: .
@@ -23,9 +32,11 @@ services:
     environment:
       - PORT=5000
       - MONGO_URI=mongodb://db:27017/siren_db
+      - REDIS_URL=redis://redis:6379
       - NODE_ENV=production
     depends_on:
       - db
+      - redis
     networks:
       - siren-network
 
