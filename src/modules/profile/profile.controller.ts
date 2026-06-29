@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { Profile } from './profile.model';
+import { ProfileService } from './profile.service';
 
 export class ProfileController {
   /**
@@ -20,14 +20,13 @@ export class ProfileController {
         return;
       }
 
-      const newProfile = new Profile({
+      const savedProfile = await ProfileService.createProfile({
         profileName,
         No_Of_Steps: totalSteps,
         steps,
         Alarm_Delay: alarmDelay || 0,
-      });
+      } as any);
 
-      const savedProfile = await newProfile.save();
       res.status(200).json({ message: savedProfile });
     } catch (error) {
       console.error('Error adding profile:', error);
@@ -47,7 +46,7 @@ export class ProfileController {
         return;
       }
 
-      const profileData = await Profile.findById(profileId);
+      const profileData = await ProfileService.getProfileById(profileId);
       res.status(200).json({ profileData });
     } catch (error) {
       console.error('Error getting profile:', error);
@@ -67,11 +66,7 @@ export class ProfileController {
         return;
       }
 
-      const newRegex = new RegExp('^' + query, 'i');
-      const suggestions = await Profile.find({
-        profileName: { $regex: newRegex },
-      }).limit(10);
-
+      const suggestions = await ProfileService.findProfilesByNameRegex(query);
       res.json({ suggestions });
     } catch (error) {
       console.error('Error in profile suggestion:', error);
@@ -97,18 +92,12 @@ export class ProfileController {
         return;
       }
 
-      const updatedProfile = await Profile.findByIdAndUpdate(
-        id,
-        {
-          $set: {
-            profileName,
-            No_Of_Steps: totalSteps,
-            steps,
-            Alarm_Delay: alarmDelay,
-          },
-        },
-        { new: true }
-      );
+      const updatedProfile = await ProfileService.updateProfile(id, {
+        profileName,
+        No_Of_Steps: totalSteps,
+        steps,
+        Alarm_Delay: alarmDelay,
+      } as any);
 
       res.status(200).json({ message: updatedProfile });
     } catch (error) {
@@ -129,7 +118,7 @@ export class ProfileController {
         return;
       }
 
-      const resp = await Profile.deleteOne({ _id: profileId });
+      const resp = await ProfileService.deleteProfile(profileId);
       res.status(200).json({ message: resp });
     } catch (error) {
       console.error('Error deleting profile:', error);
@@ -143,7 +132,7 @@ export class ProfileController {
    */
   public static async getProfiles(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const AllProfiles = await Profile.find();
+      const AllProfiles = await ProfileService.getAllProfiles();
       res.status(200).json({ profiles: AllProfiles });
     } catch (error) {
       console.error('Error getting all profiles:', error);
@@ -156,7 +145,7 @@ export class ProfileController {
    */
   public static async getProfilesList(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const AllProfiles = await Profile.find();
+      const AllProfiles = await ProfileService.getAllProfiles();
       res.status(200).json({ profiles: AllProfiles });
     } catch (error) {
       console.error('Error getting profiles list:', error);
