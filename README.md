@@ -1,6 +1,6 @@
-# SirenProject Backend
+# dcnController Backend
 
-This is the Node.js/TypeScript backend for the SirenProject, structured as a modular and dynamic universal central system. It supports dynamic product templates, physical terminal assignments, and integrates with MQTT and mDNS services.
+This is the Node.js/TypeScript backend for the dcnController, structured as a modular and dynamic universal central system. It supports dynamic product templates, physical terminal assignments, and integrates with MQTT and mDNS services.
 
 ---
 
