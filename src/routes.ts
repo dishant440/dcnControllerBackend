@@ -2,6 +2,7 @@ import { Router } from 'express';
 import userModuleRoutes from './modules/user/user.routes';
 import slaveDeviceModuleRoutes from './modules/dcnDevice/dcnDevice.routes';
 import profileModuleRoutes from './modules/profile/profile.routes';
+import productModuleRoutes from './modules/product/product.routes';
 
 const router = Router();
 
@@ -9,6 +10,7 @@ const router = Router();
 router.use('/users', userModuleRoutes);
 router.use('/slave-devices', slaveDeviceModuleRoutes);
 router.use('/profile', profileModuleRoutes);
+router.use('/products', productModuleRoutes);
 
 // Health check route
 router.get('/health', (req, res) => {
