@@ -58,6 +58,61 @@ You can start the services concurrently or individually during development:
 
 ---
 
+## Development Database & Cache Services
+
+If you want to run the backend server locally using Node (`npm run dev`) but need MongoDB and Redis running, you can spin up **only** the database and cache containers.
+
+### 1. Start DB and Cache Containers
+```bash
+docker compose up db redis -d
+```
+
+### 2. Accessing MongoDB via Command Line
+Run the MongoDB interactive shell (`mongosh`) inside the running container:
+```bash
+docker exec -it siren-mongodb mongosh
+```
+
+**Common MongoDB Commands:**
+- Switch to the app database:
+  ```javascript
+  use siren_db
+  ```
+- Show all collections:
+  ```javascript
+  show collections
+  ```
+- Query telemetry collection:
+  ```javascript
+  db.TelemetryData.find().limit(5).pretty()
+  ```
+
+### 3. Accessing Redis via Command Line
+Run `redis-cli` inside the running Redis container:
+```bash
+docker exec -it siren-redis redis-cli
+```
+
+**Common Redis Commands:**
+- List all keys:
+  ```bash
+  keys *
+  ```
+- Get current size of telemetry buffer queue:
+  ```bash
+  llen telemetry:queue
+  ```
+- Check the buffered payloads inside the queue:
+  ```bash
+  lrange telemetry:queue 0 -1
+  ```
+
+### 4. Connecting GUI Clients
+- **MongoDB Compass**: Use connection string `mongodb://localhost:27017/siren_db`
+- **RedisInsight / GUI Clients**: Host: `localhost`, Port: `6379`
+
+---
+
 ## Production Setup (Bare Metal / Local PM2)
 
 ### 1. Build TypeScript Source
