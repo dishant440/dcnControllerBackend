@@ -1,0 +1,14 @@
+[Unit]
+Description=Siren Project Backend Autostart
+After=network-pre.target NetworkManager.service docker.service
+Wants=network-pre.target NetworkManager.service docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/home/dishant/DISHANTFOLDER/CZAR/SirenProject/backend/start_backend.sh
+RemainAfterExit=yes
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target
