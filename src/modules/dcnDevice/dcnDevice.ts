@@ -39,13 +39,16 @@ async function addDevice(devices: any, count: number): Promise<Types.ObjectId[]>
       deviceType = 'PID';
     }
 
+    const calculatedSlaveId = Number(slaveData.SLAVE_ID || slaveData.COMMUNICATION_ID || slaveData.SLAVE_NO || i);
     const newDevice = new Device({
-      slaveId: slaveData.SLAVE_ID || slaveData.COMMUNICATION_ID || slaveData.SLAVE_NO || i,
+      slaveId: calculatedSlaveId,
       deviceName: slaveData.SLAVE_NAME || `Device ${i}`,
       deviceType,
       make: slaveData.SLAVE_MAKE || 'Unknown',
       modelName: slaveData.SLAVE_MODEL || 'Unknown',
-      config: {}
+      config: {
+        slaveId: calculatedSlaveId
+      }
     });
 
     const resp = await newDevice.save();
@@ -83,13 +86,16 @@ async function checkRunningDevices(deviceIds: Types.ObjectId[], devices: any, co
     if (device) {
       Running_Devices.push(device._id as Types.ObjectId);
     } else {
+      const calculatedSlaveId = Number(slaveData.SLAVE_ID || slaveData.COMMUNICATION_ID || slaveData.SLAVE_NO || i);
       const newDevice = new Device({
-        slaveId: slaveData.SLAVE_ID || slaveData.COMMUNICATION_ID || slaveData.SLAVE_NO || i,
+        slaveId: calculatedSlaveId,
         deviceName: slaveData.SLAVE_NAME,
         deviceType,
         make: slaveData.SLAVE_MAKE,
         modelName: slaveData.SLAVE_MODEL,
-        config: {}
+        config: {
+          slaveId: calculatedSlaveId
+        }
       });
       const resp = await newDevice.save();
       Available_Devices.push(resp._id as Types.ObjectId);
