@@ -31,8 +31,57 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 // Error handling middleware (must be registered last)
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 5000;
+import http from 'http';
+import https from 'https';
+import fs from 'fs';
 
-app.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+const PORT = process.env.PORT || 5000;
+const HTTPS_PORT = process.env.HTTPS_PORT || 5443;
+
+// Paths to SSL Certificates (support local/host paths)
+const caPath = process.env.SSL_CA_PATH || '/home/khadas/COMPANY_CA.crt';
+const certPath = process.env.SSL_CERT_PATH || '/home/khadas/SBC_SERVER_CERTIFICATE.crt';
+const keyPath = process.env.SSL_KEY_PATH || '/home/khadas/SBC_SERVER_CERTIFICATE.key';
+
+let ca: Buffer | undefined;
+let cert: Buffer | undefined;
+let key: Buffer | undefined;
+let runHttps = false;
+
+try {
+  if (fs.existsSync(caPath)) ca = fs.readFileSync(caPath);
+  if (fs.existsSync(certPath)) cert = fs.readFileSync(certPath);
+  if (fs.existsSync(keyPath)) key = fs.readFileSync(keyPath);
+
+  if (cert && key) {
+    runHttps = true;
+  }
+} catch (err: any) {
+  console.warn('[SSL] Could not read certificates:', err?.message || err);
+}
+
+// Start HTTP Server
+const httpServer = http.createServer(app);
+httpServer.listen(PORT, () => {
+  console.log(`HTTP Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
 });
+
+// Start HTTPS Server
+if (runHttps) {
+  const httpsOptions = {
+    ca,
+    cert,
+    key,
+    rejectUnauthorized: false,
+    requestCert: false,
+    minVersion: 'TLSv1.2' as const,
+    maxVersion: 'TLSv1.3' as const,
+    honorCipherOrder: true,
+  };
+  const httpsServer = https.createServer(httpsOptions, app);
+  httpsServer.listen(HTTPS_PORT, () => {
+    console.log(`HTTPS Server running in ${process.env.NODE_ENV || 'development'} mode on port ${HTTPS_PORT}`);
+  });
+} else {
+  console.log('[SSL] HTTPS Server not started (SSL certificates not found or unreadable).');
+}

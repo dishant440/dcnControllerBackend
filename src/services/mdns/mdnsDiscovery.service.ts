@@ -21,12 +21,17 @@ export class MdnsDiscoveryService {
     httpBrowser.on('up', this.handleDeviceUp.bind(this));
     httpBrowser.on('down', this.handleDeviceDown.bind(this));
 
-    // 2. Browse for custom Siren services
+    // 2. Browse for standard HTTPS services
+    const httpsBrowser = this.bonjour.find({ type: 'https' });
+    httpsBrowser.on('up', this.handleDeviceUp.bind(this));
+    httpsBrowser.on('down', this.handleDeviceDown.bind(this));
+
+    // 3. Browse for custom Siren services
     const sirenBrowser = this.bonjour.find({ type: 'siren' });
     sirenBrowser.on('up', this.handleDeviceUp.bind(this));
     sirenBrowser.on('down', this.handleDeviceDown.bind(this));
 
-    console.log('[mDNS] Scanning for "http" and "siren" service advertisements...');
+    console.log('[mDNS] Scanning for "http", "https", and "siren" service advertisements...');
 
     // 3. Publish local service (advertise this SBC server)
     const publishName = process.env.MDNS_PUBLISH_NAME || 'SBC-server';
