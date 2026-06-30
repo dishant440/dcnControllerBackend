@@ -6,6 +6,9 @@ const router = Router();
 router.route('/')
   .get(SlaveDeviceController.getDevices);
 
+router.route('/addesp')
+  .post(SlaveDeviceController.addDcn);
+
 router.route('/:id')
   .get(SlaveDeviceController.getDeviceById);
 
