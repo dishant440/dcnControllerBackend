@@ -145,6 +145,7 @@ export class SlaveDeviceController {
    * @access  Public
    */
   public static async addDcn(req: Request, res: Response, next: NextFunction): Promise<void> {
+    console.log("function called : addDcn")
     try {
       const { DCN_SERIAL_NUMBER, DCN_MAC_ADDRESS, DCN_IP_ADDRESS, DCN_NAME, SLAVE_COUNT, SLAVE_DEVICES } = req.body?.DCN_LOGGER_DATA || {};
 
