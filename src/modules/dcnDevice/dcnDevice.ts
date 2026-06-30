@@ -40,7 +40,7 @@ async function addDevice(devices: any, count: number): Promise<Types.ObjectId[]>
     }
 
     const newDevice = new Device({
-      slaveId: slaveData.COMMUNICATION_ID || slaveData.SLAVE_NO || i,
+      slaveId: slaveData.SLAVE_ID || slaveData.COMMUNICATION_ID || slaveData.SLAVE_NO || i,
       deviceName: slaveData.SLAVE_NAME || `Device ${i}`,
       deviceType,
       make: slaveData.SLAVE_MAKE || 'Unknown',
@@ -73,7 +73,7 @@ async function checkRunningDevices(deviceIds: Types.ObjectId[], devices: any, co
     if (!DeviceHandlerFactory.hasHandler(deviceType)) deviceType = 'PID';
 
     const device = await Device.findOne({
-      slaveId: slaveData.COMMUNICATION_ID || slaveData.SLAVE_NO || i,
+      slaveId: slaveData.SLAVE_ID || slaveData.COMMUNICATION_ID || slaveData.SLAVE_NO || i,
       deviceName: slaveData.SLAVE_NAME,
       make: slaveData.SLAVE_MAKE,
       modelName: slaveData.SLAVE_MODEL,
@@ -84,7 +84,7 @@ async function checkRunningDevices(deviceIds: Types.ObjectId[], devices: any, co
       Running_Devices.push(device._id as Types.ObjectId);
     } else {
       const newDevice = new Device({
-        slaveId: slaveData.COMMUNICATION_ID || slaveData.SLAVE_NO || i,
+        slaveId: slaveData.SLAVE_ID || slaveData.COMMUNICATION_ID || slaveData.SLAVE_NO || i,
         deviceName: slaveData.SLAVE_NAME,
         deviceType,
         make: slaveData.SLAVE_MAKE,
