@@ -40,6 +40,19 @@ services:
     networks:
       - siren-network
 
+  mdns:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: siren-mdns
+    restart: unless-stopped
+    command: ["npm", "run", "start:mdns"]
+    network_mode: host  # Required for mDNS multicast traffic
+    environment:
+      - MONGO_URI=mongodb://localhost:27017/siren_db # Must connect via localhost since host mode is used
+    depends_on:
+      - db
+      
 volumes:
   mongodb_data:
 
