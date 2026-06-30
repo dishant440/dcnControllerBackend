@@ -1,28 +1,13 @@
 import dotenv from 'dotenv';
-import { connectDB } from '../../config/db';
 import { MdnsDiscoveryService } from './mdnsDiscovery.service';
-import express from 'express';
 
 // Load environment variables
 dotenv.config();
 
-// Connect to Database
-connectDB();
+console.log('mDNS Service starting...');
 
-const app = express();
-
-app.use(express.json());
-
-
-
-console.log('mDNS Discovery Process starting...');
-
-// Start the discovery service
+// Start the advertisement service
 MdnsDiscoveryService.startDiscovery();
-
-
-
-
 
 // Handle clean shutdown
 const shutdown = () => {
@@ -30,8 +15,6 @@ const shutdown = () => {
   MdnsDiscoveryService.stopDiscovery();
   process.exit(0);
 };
-
-
 
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
